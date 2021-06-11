@@ -16,6 +16,9 @@
 
 package org.springframework.graphql.boot;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -23,6 +26,7 @@ import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.graphql.execution.GraphQlSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,19 +43,19 @@ class GraphQlAutoConfigurationTests {
 	void shouldFailWhenSchemaFileIsMissing() {
 		this.contextRunner.run((context) -> {
 			assertThat(context).hasFailed();
-			assertThat(context).getFailure().getRootCause().hasMessage("'schemaResource' does not exist");
+			assertThat(context).getFailure().getRootCause().hasMessage("'schemaResource(s)' not provided");
 		});
 	}
 
 	@Test
 	void shouldCreateBuilderWithSdl() {
-		this.contextRunner.withPropertyValues("spring.graphql.schema.location:classpath:books/schema.graphqls")
+		this.contextRunner.withPropertyValues("spring.graphql.schema.location:classpath:books/*.graphqls")
 				.run((context) -> assertThat(context).hasSingleBean(GraphQlSource.class));
 	}
 
 	@Test
 	void shouldUseProgrammaticallyDefinedBuilder() {
-		this.contextRunner.withPropertyValues("spring.graphql.schema.location:classpath:books/schema.graphqls")
+		this.contextRunner.withPropertyValues("spring.graphql.schema.location:classpath:books/*.graphqls")
 				.withUserConfiguration(CustomGraphQlBuilderConfiguration.class).run((context) -> {
 					assertThat(context).hasBean("customGraphQlSourceBuilder");
 					assertThat(context).hasSingleBean(GraphQlSource.Builder.class);
@@ -63,7 +67,10 @@ class GraphQlAutoConfigurationTests {
 
 		@Bean
 		GraphQlSource.Builder customGraphQlSourceBuilder() {
-			return GraphQlSource.builder().schemaResource(new ClassPathResource("books/schema.graphqls"));
+			List<Resource> schemaResources = new ArrayList<>();
+			schemaResources.add(new ClassPathResource("books/schema.graphqls"));
+			schemaResources.add(new ClassPathResource("books/type.graphqls"));
+			return GraphQlSource.builder().schemaResources(schemaResources);
 		}
 
 	}

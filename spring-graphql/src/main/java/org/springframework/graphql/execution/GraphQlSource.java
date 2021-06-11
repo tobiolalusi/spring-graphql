@@ -71,11 +71,12 @@ public interface GraphQlSource {
 
 		/**
 		 * Provide the resource for the GraphQL {@literal ".schema"} file to parse.
-		 * @param resource the resource for the GraphQL schema
+		 * @param resources the resources for the GraphQL schema
 		 * @return the current builder
 		 * @see graphql.schema.idl.SchemaParser#parse(File)
+		 * @see graphql.schema.idl.TypeDefinitionRegistry#merge(TypeDefinitionRegistry)
 		 */
-		Builder schemaResource(Resource resource);
+		Builder schemaResources(List<Resource> resources);
 
 		/**
 		 * Set a {@link RuntimeWiring} to contribute data fetchers and more.

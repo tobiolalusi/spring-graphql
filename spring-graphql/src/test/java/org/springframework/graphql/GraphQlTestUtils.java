@@ -17,13 +17,17 @@
 package org.springframework.graphql;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import graphql.GraphQL;
 import graphql.schema.DataFetcher;
 import graphql.schema.idl.RuntimeWiring;
 
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.graphql.execution.DataFetcherExceptionResolver;
 import org.springframework.graphql.execution.GraphQlSource;
 
@@ -34,25 +38,33 @@ public abstract class GraphQlTestUtils {
 
 	public static GraphQL initGraphQl(String schemaContent, String typeName, String fieldName, DataFetcher<?> fetcher) {
 
-		return initGraphQlSource(schemaContent, typeName, fieldName, fetcher).build().graphQl();
+		return initGraphQlSource(Collections.singletonList(schemaContent), typeName, fieldName, fetcher).build()
+				.graphQl();
+	}
+
+	public static GraphQL initGraphQl(List<String> schemas, String typeName, String fieldName, DataFetcher<?> fetcher) {
+
+		return initGraphQlSource(schemas, typeName, fieldName, fetcher).build().graphQl();
 	}
 
 	public static GraphQL initGraphQl(String schemaContent, String typeName, String fieldName, DataFetcher<?> fetcher,
 			DataFetcherExceptionResolver... resolvers) {
 
-		return initGraphQlSource(schemaContent, typeName, fieldName, fetcher)
+		return initGraphQlSource(Collections.singletonList(schemaContent), typeName, fieldName, fetcher)
 				.exceptionResolvers(Arrays.asList(resolvers)).build().graphQl();
 	}
 
-	public static GraphQlSource.Builder initGraphQlSource(String schemaContent, String typeName, String fieldName,
+	public static GraphQlSource.Builder initGraphQlSource(List<String> schemas, String typeName, String fieldName,
 			DataFetcher<?> fetcher) {
 
 		RuntimeWiring wiring = RuntimeWiring.newRuntimeWiring()
 				.type(typeName, (builder) -> builder.dataFetcher(fieldName, fetcher)).build();
 
-		return GraphQlSource.builder()
-				.schemaResource(new ByteArrayResource(schemaContent.getBytes(StandardCharsets.UTF_8)))
-				.runtimeWiring(wiring);
+		List<Resource> resources = new ArrayList<>();
+		for (String schemaContent : schemas) {
+			resources.add(new ByteArrayResource(schemaContent.getBytes(StandardCharsets.UTF_8)));
+		}
+		return GraphQlSource.builder().schemaResources(resources).runtimeWiring(wiring);
 	}
 
 }

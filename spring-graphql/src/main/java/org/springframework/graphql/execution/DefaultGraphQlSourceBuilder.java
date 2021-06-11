@@ -46,7 +46,7 @@ import org.springframework.util.Assert;
 class DefaultGraphQlSourceBuilder implements GraphQlSource.Builder {
 
 	@Nullable
-	private Resource schemaResource;
+	private List<Resource> schemaResources;
 
 	private RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring().build();
 
@@ -64,8 +64,8 @@ class DefaultGraphQlSourceBuilder implements GraphQlSource.Builder {
 	}
 
 	@Override
-	public GraphQlSource.Builder schemaResource(Resource resource) {
-		this.schemaResource = resource;
+	public GraphQlSource.Builder schemaResources(List<Resource> resources) {
+		this.schemaResources = resources;
 		return this;
 	}
 
@@ -102,7 +102,7 @@ class DefaultGraphQlSourceBuilder implements GraphQlSource.Builder {
 
 	@Override
 	public GraphQlSource build() {
-		TypeDefinitionRegistry registry = parseSchemaResource();
+		TypeDefinitionRegistry registry = parseSchemaResources();
 
 		GraphQLSchema schema = new SchemaGenerator().makeExecutableSchema(registry, this.runtimeWiring);
 		for (GraphQLTypeVisitor visitor : this.typeVisitors) {
@@ -120,16 +120,27 @@ class DefaultGraphQlSourceBuilder implements GraphQlSource.Builder {
 		return new CachedGraphQlSource(graphQl, schema);
 	}
 
-	private TypeDefinitionRegistry parseSchemaResource() {
-		Assert.notNull(this.schemaResource, "'schemaResource' not provided");
-		Assert.isTrue(this.schemaResource.exists(), "'schemaResource' does not exist");
+	private TypeDefinitionRegistry parseSchemaResources() {
+		if (this.schemaResources == null || this.schemaResources.size() == 0) {
+			throw new IllegalArgumentException("'schemaResource(s)' not provided");
+		}
+		final TypeDefinitionRegistry typeDefinitionRegistry = new TypeDefinitionRegistry();
+		for (Resource schemaResource : this.schemaResources) {
+			typeDefinitionRegistry.merge(parseSchemaResource(schemaResource));
+		}
+		return typeDefinitionRegistry;
+	}
+
+	private TypeDefinitionRegistry parseSchemaResource(Resource schemaResource) {
+		Assert.notNull(schemaResource, "schema resource may not be null.");
+		Assert.isTrue(schemaResource.exists(), "schema resource '" + schemaResource + "' does not exist.");
 		try {
-			try (InputStream inputStream = this.schemaResource.getInputStream()) {
+			try (InputStream inputStream = schemaResource.getInputStream()) {
 				return new SchemaParser().parse(inputStream);
 			}
 		}
 		catch (IOException ex) {
-			throw new IllegalArgumentException("Failed to load resourceLocation " + this.schemaResource.toString());
+			throw new IllegalArgumentException("Failed to load resourceLocation " + schemaResource);
 		}
 	}
 

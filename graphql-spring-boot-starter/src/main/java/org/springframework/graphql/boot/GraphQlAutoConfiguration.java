@@ -16,6 +16,8 @@
 
 package org.springframework.graphql.boot;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.stream.Collectors;
 
 import graphql.GraphQL;
@@ -29,7 +31,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.graphql.execution.DataFetcherExceptionResolver;
 import org.springframework.graphql.execution.GraphQlSource;
 
@@ -66,11 +70,12 @@ public class GraphQlAutoConfiguration {
 		@Bean
 		public GraphQlSource.Builder graphQlSourceBuilder(GraphQlProperties properties, RuntimeWiring runtimeWiring,
 				ObjectProvider<DataFetcherExceptionResolver> exceptionResolversProvider, ResourceLoader resourceLoader,
-				ObjectProvider<Instrumentation> instrumentationsProvider) {
+				ObjectProvider<Instrumentation> instrumentationsProvider) throws IOException {
 
 			String schemaLocation = properties.getSchema().getLocation();
-			return GraphQlSource.builder().schemaResource(resourceLoader.getResource(schemaLocation))
-					.runtimeWiring(runtimeWiring)
+			Resource[] schemaResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader)
+					.getResources(schemaLocation);
+			return GraphQlSource.builder().schemaResources(Arrays.asList(schemaResources)).runtimeWiring(runtimeWiring)
 					.exceptionResolvers(exceptionResolversProvider.orderedStream().collect(Collectors.toList()))
 					.instrumentation(instrumentationsProvider.orderedStream().collect(Collectors.toList()));
 		}

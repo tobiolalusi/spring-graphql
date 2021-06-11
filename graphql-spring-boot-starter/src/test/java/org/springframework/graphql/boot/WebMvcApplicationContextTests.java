@@ -98,7 +98,7 @@ class WebMvcApplicationContextTests {
 				.withUserConfiguration(DataFetchersConfiguration.class, CustomWebInterceptor.class)
 				.withPropertyValues("spring.main.web-application-type=servlet",
 						"spring.graphql.schema.printer.enabled=true",
-						"spring.graphql.schema.location=classpath:books/schema.graphqls")
+						"spring.graphql.schema.location=classpath:books/*.graphqls")
 				.run((context) -> {
 					MockHttpServletRequestBuilder builder = post("/graphql").contentType(MediaType.APPLICATION_JSON)
 							.accept(MediaType.APPLICATION_JSON);

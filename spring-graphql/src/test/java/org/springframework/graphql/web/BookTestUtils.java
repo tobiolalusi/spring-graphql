@@ -16,8 +16,10 @@
 
 package org.springframework.graphql.web;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import graphql.schema.idl.RuntimeWiring;
@@ -25,6 +27,7 @@ import graphql.schema.idl.TypeRuntimeWiring;
 import reactor.core.publisher.Flux;
 
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.graphql.execution.ExecutionGraphQlService;
 import org.springframework.graphql.execution.GraphQlSource;
 
@@ -64,8 +67,10 @@ public abstract class BookTestUtils {
 			String author = env.getArgument("author");
 			return Flux.fromIterable(booksMap.values()).filter((book) -> book.getAuthor().contains(author));
 		}));
-		return GraphQlSource.builder().schemaResource(new ClassPathResource("books/schema.graphqls"))
-				.runtimeWiring(builder.build()).build();
+		List<Resource> schemaResources = new ArrayList<>();
+		schemaResources.add(new ClassPathResource("books/schema.graphqls"));
+		schemaResources.add(new ClassPathResource("books/type.graphqls"));
+		return GraphQlSource.builder().schemaResources(schemaResources).runtimeWiring(builder.build()).build();
 	}
 
 }

@@ -17,6 +17,7 @@
 package org.springframework.graphql.execution;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -74,8 +75,10 @@ public class ContextDataFetcherDecoratorTests {
 
 	@Test
 	void fluxDataFetcherSubscription() throws Exception {
-		GraphQL graphQl = GraphQlTestUtils.initGraphQl(
-				"type Query { greeting: String } type Subscription { greetings: String }", "Subscription", "greetings",
+		List<String> schemas = new ArrayList<>();
+		schemas.add("type Query { greeting: String }");
+		schemas.add("type Subscription { greetings: String }");
+		GraphQL graphQl = GraphQlTestUtils.initGraphQl(schemas, "Subscription", "greetings",
 				(env) -> Mono.delay(Duration.ofMillis(50)).flatMapMany((aLong) -> Flux.deferContextual((context) -> {
 					String name = context.get("name");
 					return Flux.just("Hi", "Bonjour", "Hola").map((s) -> s + " " + name);
